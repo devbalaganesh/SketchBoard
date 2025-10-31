@@ -28,6 +28,15 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+# Ignore environment files
+.env
+*.env
+# Environment variables
+.env
+*.env
+apps/*/.env
+packages/*/.env
+
 
 # turbo
 .turbo
