@@ -1,4 +1,4 @@
 #!/bin/bash
-pnpm install --frozen-lockfile
+pnpm install --no-frozen-lockfile
 pnpm run build
 
