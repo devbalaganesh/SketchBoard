@@ -66,7 +66,8 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/user", userRoutes);
 app.use("/room", roomRoutes);
 
-const PORT: number = parseInt(process.env.PORT ?? "5000", 10);
+const PORT = Number(process.env.PORT) || 10000;
+
 const server = createServer(app);
 
 // Initialize WebSocket
@@ -79,7 +80,8 @@ server.listen(PORT, () => {
 // Keep server alive with periodic requests
 cron.schedule("*/14 * * * *", async () => {
   try {
-    const res = await axios.get(`http://localhost:10000`);
+   const res = await axios.get(`https://<your-backend-url>.onrender.com/`);
+
     console.log(res.data);
   } catch (e: any) {
     console.error(e);
