@@ -10,6 +10,7 @@ import morgan from "morgan";
 import path from "path";
 import { rateLimit } from "express-rate-limit";
 import axios from "axios";
+import fs from "fs";
 
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000,
@@ -19,21 +20,18 @@ const limiter = rateLimit({
 });
 
 const rfs = require("rotating-file-stream");
-
 const app = express();
-
 app.set("trust proxy", 1);
 
-//logs
+// Logs
 const logDir = path.join(__dirname, "logs");
-
+if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
 const logStream = rfs.createStream("requestLogs.log", {
   interval: "1d",
   path: logDir,
 });
 
-//cors
-
+// CORS
 const allowedOrigins = [
   "https://excali-sketch-frontend.vercel.app",
   "https://www.excali-sketch1.shop",
@@ -45,7 +43,6 @@ app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -69,21 +66,23 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/user", userRoutes);
 app.use("/room", roomRoutes);
 
-const PORT: number = parseInt(process.env.PORT ?? "5000", 10);
+// ✅ Dynamic Render-compatible port
+const PORT: number = parseInt(process.env.PORT ?? "8080", 10);
 const server = createServer(app);
 
-// Initialize the WebSocket logic on the shared HTTP server
+// Initialize WebSocket
 initWebSocket(server);
 
 server.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
 
+// ✅ Cron ping (fixed for Render)
 cron.schedule("*/14 * * * *", async () => {
   try {
-    const res = await axios.get(`http://localhost:10000`);
-    console.log(res.data);
+    const res = await axios.get(`http://localhost:${PORT}`);
+    console.log("Ping successful:", res.data);
   } catch (e) {
-    console.error(e);
+    console.error("Ping failed:", e.message);
   }
 });

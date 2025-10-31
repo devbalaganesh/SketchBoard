@@ -1,4 +1,5 @@
 "use client";
+import React from 'react';
 
 import { Link as ScrollLink } from "react-scroll";
 import { useEffect, useState, useRef } from "react";
