@@ -1,6 +1,6 @@
 import "./types/express-augmentations";
 import cron from "node-cron";
-import express, { NextFunction, Request, Response } from "express";
+import express, { Request, Response } from "express";
 import { createServer } from "http";
 import cors from "cors";
 import userRoutes from "./routes/userRoutes";
@@ -10,7 +10,6 @@ import morgan from "morgan";
 import path from "path";
 import { rateLimit } from "express-rate-limit";
 import axios from "axios";
-import fs from "fs";
 
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000,
@@ -20,18 +19,18 @@ const limiter = rateLimit({
 });
 
 const rfs = require("rotating-file-stream");
+
 const app = express();
 app.set("trust proxy", 1);
 
 // Logs
 const logDir = path.join(__dirname, "logs");
-if (!fs.existsSync(logDir)) fs.mkdirSync(logDir);
 const logStream = rfs.createStream("requestLogs.log", {
   interval: "1d",
   path: logDir,
 });
 
-// CORS
+// CORS setup
 const allowedOrigins = [
   "https://excali-sketch-frontend.vercel.app",
   "https://www.excali-sketch1.shop",
@@ -59,6 +58,7 @@ app.use(limiter);
 app.use(morgan("common", { stream: logStream }));
 app.use(express.json());
 
+// Root route
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({ msg: "hello there" });
 });
@@ -66,8 +66,7 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/user", userRoutes);
 app.use("/room", roomRoutes);
 
-// ✅ Dynamic Render-compatible port
-const PORT: number = parseInt(process.env.PORT ?? "8080", 10);
+const PORT: number = parseInt(process.env.PORT ?? "5000", 10);
 const server = createServer(app);
 
 // Initialize WebSocket
@@ -77,12 +76,12 @@ server.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
 
-// ✅ Cron ping (fixed for Render)
+// Keep server alive with periodic requests
 cron.schedule("*/14 * * * *", async () => {
   try {
-    const res = await axios.get(`http://localhost:${PORT}`);
-    console.log("Ping successful:", res.data);
-  } catch (e) {
-    console.error("Ping failed:", e.message);
+    const res = await axios.get(`http://localhost:10000`);
+    console.log(res.data);
+  } catch (e: any) {
+    console.error(e);
   }
 });
